@@ -1,3 +1,4 @@
+
 import os
 import shutil
 import subprocess
@@ -16,31 +17,68 @@ class MyApp(QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
-        self.dialog_btn1Event = QDialog()  # 추가(신은철) - 임시파일제거
+        self.dialog_btn1Event = QDialog()  # 추가(신은철) - 서비스관리
         self.dialog_btn3Event = QDialog()  # 추가(신은철) - 임시파일제거
+        self.runServiceDialog = QDialog()  # 추가(신은철) - 서비스관리-모달
+
+    def inputRunServiceText(self,lineedit,text):
+        subprocess.call('powershell Start-Service -Name "' + lineedit.text()+'"')
+
+    def inputStopServiceText(self, lineedit, text):
+        subprocess.call('powershell Start-Service -Name "' + lineedit.text() + '"')
+
+    def runService(self):
+        self.setGeometry(800 , 700 , 500 , 500)
+        inputservice = QLineEdit(self.runServiceDialog)
+        inputservice.move(200 , 50)
+        inputservice.show()
+        inputservice.setWindowModality(Qt.ApplicationModal)
+        btnInput = QPushButton("Run",self.runServiceDialog)
+        btnInput.clicked.connect(lambda:self.inputRunServiceText(inputservice))
+
+        self.runServiceDialog.show()
+
+    def stopService(self):
+        self.setGeometry(800, 700, 500, 500)
+        input = QLineEdit(self.runServiceDialog)
+        input.move(200, 80)
+        input.show()
+        input.setWindowModality(Qt.ApplicationModal)
+        btnInput = QPushButton("Stop", self.runServiceDialog)
+        btnInput.clicked.connect(lambda: self.inputStopServiceText(input, "Stop"))
+
+        self.runServiceDialog.show()
+
 
     # 서비스 관리 이벤트
     def btn1Event(self):
+
         tb = QTextBrowser(self.dialog_btn1Event)
         self.dialog_btn1Event.setWindowTitle('서비스 관리')
-        self.dialog_btn1Event.setWindowModality(Qt.ApplicationModal)
-        self.dialog_btn1Event.resize(350, 200)
+        self.dialog_btn1Event.resize(710, 300)
         self.dialog_btn1Event.show()
+        tb.resize(600,300)
+        btnRun = QPushButton("Run service",self.dialog_btn1Event)
+        btnRun.setCheckable(True)
+        btnRun.move(610,20)
+        btnRun.clicked.connect(lambda:self.runService())
+        btnRun.show()
+        btnStop = QPushButton("Stop service",self.dialog_btn1Event)
+        btnStop.setCheckable(True)
+        btnStop.move(610,60)
+        btnStop.clicked.connect(lambda:self.stopService())
+        btnStop.show()
 
         try:
-            file_path = 'C:/Users/' + os.getlogin()+ '/Desktop/makers/service.txt'
+            file_path = 'C:/Users/' + os.getlogin() + '/Desktop/makers/service.txt'
             subprocess.call('powershell Get-Service | Out-File -FilePath ' + file_path)
 
-            file = open(file_path,"r")
+            file = open(file_path,"r",encoding="utf-16")
             while(True):
-                tb.append(file.readline())
-                if file.readline() == ' ':
+                str = file.readline()
+                tb.append(str)
+                if file.readline() == '':
                     break
-
-
-
-
-
 
         except Exception as e:
             print(e)
@@ -168,3 +206,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = MyApp()
     sys.exit(app.exec_())
+
