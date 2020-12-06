@@ -5,6 +5,7 @@ import subprocess
 import sys
 import threading
 import time
+from os import listdir
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -18,17 +19,22 @@ class MyApp(QWidget):
         super().__init__()
         self.initUI()
         self.dialog_btn1Event = QDialog()  # 추가(신은철) - 서비스관리
+        self.dialog_btn2Event = QDialog()  # 추가(신은철) - 파일삭제
         self.dialog_btn3Event = QDialog()  # 추가(신은철) - 임시파일제거
+        self.dialog_btn4Event = QDialog()  # 추가(신은철) - 임시파일제거
         self.runServiceDialog = QDialog()  # 추가(신은철) - 서비스관리-모달
+        self.removefileDialog = QDialog()  # 추가(신은철) - 파일삭제
 
-    def inputRunServiceText(self,lineedit,text):
+    #서비스 실행 명령어
+    def inputRunServiceText(self,lineedit):
         subprocess.call('powershell Start-Service -Name "' + lineedit.text()+'"')
 
-    def inputStopServiceText(self, lineedit, text):
+    #서비스 중지 명령어
+    def inputStopServiceText(self, lineedit):
         subprocess.call('powershell Start-Service -Name "' + lineedit.text() + '"')
 
+    #서비스실행함수
     def runService(self):
-        self.setGeometry(800 , 700 , 500 , 500)
         inputservice = QLineEdit(self.runServiceDialog)
         inputservice.move(200 , 50)
         inputservice.show()
@@ -38,16 +44,39 @@ class MyApp(QWidget):
 
         self.runServiceDialog.show()
 
+    #서비스 중지 함수
     def stopService(self):
-        self.setGeometry(800, 700, 500, 500)
         input = QLineEdit(self.runServiceDialog)
         input.move(200, 80)
         input.show()
         input.setWindowModality(Qt.ApplicationModal)
         btnInput = QPushButton("Stop", self.runServiceDialog)
-        btnInput.clicked.connect(lambda: self.inputStopServiceText(input, "Stop"))
+        btnInput.clicked.connect(lambda: self.inputStopServiceText(input))
 
         self.runServiceDialog.show()
+    #파일삭제 함수
+    def removeFile(self,folder_path,extension):
+
+        msg = QMessageBox()
+        msg.setWindowTitle("Remove File")
+
+        path = folder_path.text()
+        ext = extension.text()
+
+        if not path.endswith("\\"):
+            path = path + "\\"
+
+        for file_name in listdir(path):
+            if file_name.endswith(ext):
+                os.remove(path + file_name)
+                msg.setText("remove complete")
+
+        else :
+            msg.setText("nothing to remove")
+
+        result = msg.exec_()
+
+
 
 
     # 서비스 관리 이벤트
@@ -73,6 +102,8 @@ class MyApp(QWidget):
             file_path = 'C:/Users/' + os.getlogin() + '/Desktop/makers/service.txt'
             subprocess.call('powershell Get-Service | Out-File -FilePath ' + file_path)
 
+
+
             file = open(file_path,"r",encoding="utf-16")
             while(True):
                 str = file.readline()
@@ -88,10 +119,21 @@ class MyApp(QWidget):
 
     # 파일 정리 이벤트
     def btn2Event(self):
-        msg = QMessageBox()
-        msg.setWindowTitle("test")
-        msg.setText("content")
-        result = msg.exec_()
+        self.dialog_btn2Event.setWindowTitle('파일삭제')
+        self.dialog_btn2Event.resize(200, 150)
+        folder_path = QLineEdit(self.dialog_btn2Event)
+        folder_path.move(10, 30)
+        extension = QLineEdit(self.dialog_btn2Event)
+        extension.move(10, 60)
+        btnRun = QPushButton("삭제", self.dialog_btn2Event)
+        btnRun.setCheckable(True)
+        btnRun.move(100, 90)
+        btnRun.clicked.connect(lambda: self.removeFile(folder_path,extension))
+        folder_path.show()
+        extension.show()
+        btnRun.show()
+        self.dialog_btn2Event.show()
+
 
     # 임시파일 제거 이벤트
     def btn3Event(self):  #신은철 임시파일 제거
@@ -101,8 +143,6 @@ class MyApp(QWidget):
         self.dialog_btn3Event.setWindowModality(Qt.ApplicationModal)
         self.dialog_btn3Event.resize(350, 200)
         self.dialog_btn3Event.show()
-
-
 
         folder = 'C:/Users/' + os.getlogin() + '/AppData/Local/Temp'
 
@@ -132,10 +172,26 @@ class MyApp(QWidget):
 
     # 시작 프로그램 관리 이벤트
     def btn4Event(self):
-        msg = QMessageBox()
-        msg.setWindowTitle("test")
-        msg.setText("content")
-        result = msg.exec_()
+        tb = QTextBrowser(self.dialog_btn4Event)
+        self.dialog_btn4Event.setWindowTitle('서비스 관리')
+        self.dialog_btn4Event.resize(600, 300)
+        self.dialog_btn4Event.show()
+        tb.resize(600, 300)
+
+        try:
+            file_path = 'C:/Users/' + os.getlogin() + '/Desktop/makers/startup.txt'
+            subprocess.call('powershell Get-CimInstance Win32_StartupCommand | Out-File -FilePath ' + file_path)
+
+            file = open(file_path, "r", encoding="utf-16")
+            while (True):
+                str = file.readline()
+                tb.append(str)
+                if file.readline() == '':
+                    break
+
+        except Exception as e:
+            print(e)
+            tb.append('Access Denied: %s')
 
     # 프로세스 정리 이벤트
     def btn5Event(self):
@@ -203,7 +259,11 @@ class MyApp(QWidget):
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = MyApp()
-    sys.exit(app.exec_())
+    try:
+        app = QApplication(sys.argv)
+        ex = MyApp()
+        sys.exit(app.exec_())
+    except:
+        app = QApplication(sys.argv)
+
 
