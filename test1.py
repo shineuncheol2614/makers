@@ -23,11 +23,12 @@ class MyApp(QWidget):
         self.dialog_btn3Event = QDialog()  # 추가(신은철) - 임시파일제거
         self.dialog_btn4Event = QDialog()  # 추가(신은철) - 임시파일제거
         self.runServiceDialog = QDialog()  # 추가(신은철) - 서비스관리-모달
+        self.stopServiceDialog = QDialog()  # 추가(신은철) - 서비스관리-모달
         self.removefileDialog = QDialog()  # 추가(신은철) - 파일삭제
 
     #서비스 실행 명령어
     def inputRunServiceText(self,lineedit):
-        subprocess.call('powershell Start-Service -Name "' + lineedit.text()+'"')
+        subprocess.call('/user:Administrator powershell Start-Service -Name "' + lineedit.text()+'"')
 
     #서비스 중지 명령어
     def inputStopServiceText(self, lineedit):
@@ -35,32 +36,45 @@ class MyApp(QWidget):
 
     #서비스실행함수
     def runService(self):
+        label1 = QLabel('실행시킬 서비스 입력', self.runServiceDialog)
+        label1.setAlignment(Qt.AlignCenter)
+        label1.setGeometry(5,10,150,20)
         inputservice = QLineEdit(self.runServiceDialog)
-        inputservice.move(200 , 50)
+        inputservice.move(10 , 40)
         inputservice.show()
+        label1.show()
         inputservice.setWindowModality(Qt.ApplicationModal)
         btnInput = QPushButton("Run",self.runServiceDialog)
+        btnInput.move(100,70)
         btnInput.clicked.connect(lambda:self.inputRunServiceText(inputservice))
 
         self.runServiceDialog.show()
 
     #서비스 중지 함수
     def stopService(self):
-        input = QLineEdit(self.runServiceDialog)
-        input.move(200, 80)
+        label1 = QLabel('정지시킬 서비스 입력', self.stopServiceDialog)
+        label1.setAlignment(Qt.AlignCenter)
+        label1.setGeometry(5,10,150,20)
+        input = QLineEdit(self.stopServiceDialog)
+        input.move(10, 40)
+
+        
         input.show()
+        label1.show()
         input.setWindowModality(Qt.ApplicationModal)
-        btnInput = QPushButton("Stop", self.runServiceDialog)
+        btnInput = QPushButton("Stop", self.stopServiceDialog)
+        btnInput.move(100,70)
+
         btnInput.clicked.connect(lambda: self.inputStopServiceText(input))
 
-        self.runServiceDialog.show()
+        self.stopServiceDialog.show()
     #파일삭제 함수
     def removeFile(self,folder_path,extension):
 
         msg = QMessageBox()
         msg.setWindowTitle("Remove File")
 
-        path = folder_path.text()
+        path = folder_path
         ext = extension.text()
 
         if not path.endswith("\\"):
@@ -71,8 +85,6 @@ class MyApp(QWidget):
                 os.remove(path + file_name)
                 msg.setText("remove complete")
 
-        else :
-            msg.setText("nothing to remove")
 
         result = msg.exec_()
 
@@ -121,15 +133,16 @@ class MyApp(QWidget):
     def btn2Event(self):
         self.dialog_btn2Event.setWindowTitle('파일삭제')
         self.dialog_btn2Event.resize(200, 150)
-        folder_path = QLineEdit(self.dialog_btn2Event)
-        folder_path.move(10, 30)
+        label1 = QLabel('삭제할 확장자 입력', self.dialog_btn2Event)
+        label1.setAlignment(Qt.AlignCenter)
+        label1.setGeometry(5,30,150,20)
+        folder_path = QFileDialog.getExistingDirectory(self.dialog_btn2Event)
         extension = QLineEdit(self.dialog_btn2Event)
         extension.move(10, 60)
         btnRun = QPushButton("삭제", self.dialog_btn2Event)
         btnRun.setCheckable(True)
         btnRun.move(100, 90)
         btnRun.clicked.connect(lambda: self.removeFile(folder_path,extension))
-        folder_path.show()
         extension.show()
         btnRun.show()
         self.dialog_btn2Event.show()
